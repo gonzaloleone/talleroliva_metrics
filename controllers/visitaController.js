@@ -1,5 +1,47 @@
 const { Page, Visita } = require('../models');
 
+exports.obtenerVisitas = async (req, res) => {
+  try {
+    const visitas = await Visita.findAll({
+      include: [{
+        model: Page,
+        attributes: ['url_base', 'description']
+      }],
+      order: [['timestamp', 'DESC']]
+    });
+    res.json(visitas);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al obtener las visitas' });
+  }
+};
+
+exports.obtenerEstadisticas = async (req, res) => {
+  try {
+    const totalVisitas = await Visita.count();
+    const totalPaginas = await Page.count();
+    
+    const visitasPorPagina = await Page.findAll({
+      attributes: ['id', 'url_base', 'description'],
+      include: [{
+        model: Visita,
+        attributes: []
+      }],
+      group: ['Page.id'],
+      raw: true
+    });
+    
+    res.json({
+      totalVisitas,
+      totalPaginas,
+      visitasPorPagina
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al obtener estadísticas' });
+  }
+};
+
 exports.registrarVisita = async (req, res) => {
   try {
     const { url_complet, ip_address } = req.body;
